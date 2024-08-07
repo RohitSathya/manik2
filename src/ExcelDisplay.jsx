@@ -9,6 +9,8 @@ const ExcelDisplay = () => {
     const [view, setView] = useState('');
     const [counts, setCounts] = useState({ delayed: 0, upcoming: 0 });
     const [selectedECN, setSelectedECN] = useState(null);
+    const [search, setSearch] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
 
     useEffect(() => {
         if (data.length > 0) {
@@ -62,10 +64,25 @@ const ExcelDisplay = () => {
 
     const handleECNClick = (ecn) => {
         setSelectedECN(ecn);
+        setSearch('');
+        setSuggestions([]);
     };
 
     const closeECNDetails = () => {
         setSelectedECN(null);
+    };
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearch(value);
+
+        if (value) {
+            const filteredData = filterData(view === 'delayed');
+            const matches = filteredData.filter(row => row[2].toString().toLowerCase().includes(value.toLowerCase()));
+            setSuggestions(matches);
+        } else {
+            setSuggestions([]);
+        }
     };
 
     return (
@@ -76,6 +93,28 @@ const ExcelDisplay = () => {
                 onChange={handleFileUpload} 
                 className="mb-8 block w-full text-lg text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             />
+            {data.length > 0 && (
+                <input 
+                    type="text" 
+                    value={search} 
+                    onChange={handleSearchChange} 
+                    placeholder="Search ECN_NO..." 
+                    className="mb-8 block w-full text-lg text-gray-700 border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                />
+            )}
+            {suggestions.length > 0 && (
+                <ul className="mb-8 bg-white border border-gray-300 rounded-lg shadow-md">
+                    {suggestions.map((row, index) => (
+                        <li 
+                            key={index} 
+                            onClick={() => handleECNClick(row)} 
+                            className="py-2 px-4 cursor-pointer hover:bg-gray-100"
+                        >
+                            {row[2]}
+                        </li>
+                    ))}
+                </ul>
+            )}
             {loading && <p className="text-center text-blue-600 text-lg">Loading...</p>}
             {data.length > 0 && (
                 <div className="flex justify-center space-x-4 mb-8">
@@ -114,7 +153,7 @@ const ExcelDisplay = () => {
                                 >
                                     <td className="py-4 px-6 border-b border-gray-200 text-sm">{row[2]}</td> {/* ECN_NO column */}
                                     <td className="py-4 px-6 border-b border-gray-200 text-sm">{row[5]}</td> {/* TITLE column */}
-                                    <td className="py-4 px-6 border-b border-gray-200 text-sm" onClick={()=>console.log(row)}>{view === 'delayed' ? row[13] : row[14]}</td> {/* Date column */}
+                                    <td className="py-4 px-6 border-b border-gray-200 text-sm">{view === 'delayed' ? row[13] : row[14]}</td> {/* Date column */}
                                 </tr>
                             ))}
                         </tbody>
